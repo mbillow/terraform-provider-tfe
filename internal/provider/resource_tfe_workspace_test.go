@@ -2826,6 +2826,38 @@ resource "tfe_workspace" "foobar" {
 }`, rInt)
 }
 
+func testAccTFEWorkspace_basicNoTagsWithIgnore(rInt int) string {
+	return fmt.Sprintf(`
+resource "tfe_organization" "foobar" {
+  name  = "tst-terraform-%d"
+  email = "admin@company.com"
+}
+
+resource "tfe_workspace" "foobar" {
+  name               = "workspace-test"
+  organization       = tfe_organization.foobar.id
+  auto_apply         = true
+  tag_names          = []
+  ignored_tag_name_patterns = ["foo*"]
+}`, rInt)
+}
+
+func testAccTFEWorkspace_basicNoTagsWithIgnore(rInt int) string {
+	return fmt.Sprintf(`
+resource "tfe_organization" "foobar" {
+  name  = "tst-terraform-%d"
+  email = "admin@company.com"
+}
+
+resource "tfe_workspace" "foobar" {
+  name               = "workspace-test"
+  organization       = tfe_organization.foobar.id
+  auto_apply         = true
+  tag_names          = []
+  ignored_tag_name_patterns = ["foo*"]
+}`, rInt)
+}
+
 func testAccTFEWorkspace_basicFileTriggersOff(rInt int) string {
 	return fmt.Sprintf(`
 resource "tfe_organization" "foobar" {

@@ -18,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-secure-stdlib/strutil"
 	tfe "github.com/hashicorp/go-tfe"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -206,6 +207,12 @@ func resourceTFEWorkspace() *schema.Resource {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Computed: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+
+			"ignored_tag_name_patterns": {
+				Type:     schema.TypeList,
+				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 
@@ -421,9 +428,12 @@ func resourceTFEWorkspaceCreate(d *schema.ResourceData, meta interface{}) error 
 		}
 	}
 
+	ignoredTags := d.Get("ignored_tag_name_patterns").([]string)
 	for _, tagName := range d.Get("tag_names").(*schema.Set).List() {
 		name := tagName.(string)
-		options.Tags = append(options.Tags, &tfe.Tag{Name: name})
+		if !strutil.StrListContainsGlob(ignoredTags, name) {
+			options.Tags = append(options.Tags, &tfe.Tag{Name: name})
+		}
 	}
 
 	log.Printf("[DEBUG] Create workspace %s for organization: %s", name, organization)
@@ -529,8 +539,11 @@ func resourceTFEWorkspaceRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("agent_pool_id", agentPoolID)
 
 	var tagNames []interface{}
+	ignoredTags := d.Get("ignored_tag_name_patterns").([]string)
 	for _, tagName := range workspace.TagNames {
-		tagNames = append(tagNames, tagName)
+		if !strutil.StrListContainsGlob(ignoredTags, tagName) {
+			tagNames = append(tagNames, tagName)
+		}
 	}
 	d.Set("tag_names", tagNames)
 
